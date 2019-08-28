@@ -1,0 +1,7 @@
+custom_js:
+  version: 1.x
+  js:
+    js/valid.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupalSettings

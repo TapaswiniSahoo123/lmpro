@@ -1,0 +1,6 @@
+name: LMS
+type: module
+description: A Form for employee details
+package: Custom
+version: 8.x
+core: 8.x

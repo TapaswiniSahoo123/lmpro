@@ -1,0 +1,74 @@
+<?php
+/**
+ * Implements hook_form_alter().
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Form\FormBase;
+
+function lmp_form_alter(&$form, $form_state, $form_id) {
+
+	if($form_id=='node_create_allowance_form')
+	{
+		//kint($form_state);die;
+		//print_r(expression);die;
+	 	$form['#validate'][] = 'node_create_allowance_form_validate';
+	}
+	 if ($form_id=='node_assign_allowance_form')
+	 {
+	 	//kint($form_state);exit;
+	 	$form['#validate'][] = 'lmp_form_validate';
+   	 	$form['title']['widget'][0]['value']['#attributes']['readonly'] = 'readonly';
+   	 	$form['title']['widget'][0]['value']['#value'] = 'Assign Allowance';
+   		$form['actions']['submit']['#submit'][] = 'node_assign_allowance_form_submit';
+	}
+	/// if($form_id=='node_applyleave_form') {
+	// 	 $form['#attached']['library'][] = 'core/drupal.ajax';
+	//		$form['#field_end_date'][] = 'altered_filters_ajax';
+		//$form['field_days']['#ajax'] = [
+      //'callback' => 'Drupal\altered_filters\AjaxCallback::myCallback',
+      //'callback' => 'altered_filters_ajax',
+      //'wrapper' => 'admin_area_wrapper',
+      //'event' => 'click',
+//];
+//}
+//return $form;
+}
+function node_create_allowance_form_validate(&$form,$form_state) {
+	//echo "hello";die;
+	//kint($form_state);exit;
+$start_date= date('Y',$form_state->getValue('field_start_date')[0]['value']->getPhpDateTime()->getTimestamp());
+$end_date = date('Y',$form_state->getValue('field_end_date')[0]['value']->getPhpDateTime()->getTimestamp());
+	  if ($start_date > $end_date) {
+        $form_state->setErrorByName('start_date', 'Start Date cannot be more that end date');
+	  }
+}
+function node_assign_allowance_form_submit(&$form, $form_state) {
+	$date = date('Y-m-d',$form_state->getValue('field_start_date')[0]['value']->getPhpDateTime()->getTimestamp());
+	$date = explode('-',$date)[0];
+    $entity = $form_state->getFormObject()->getEntity();
+ 	$year=explode('-',$date)[0];//dynamically get month
+  	// print_r($form_state->getValues());die;
+  	$values = $form_state->getValues();
+  	$allowance_type = \Drupal\node\Entity\Node::load($values['field_allowance_name'][0]['target_id']);
+  	// kint($allowance_type);exit;
+ 		$alwsd = $allowance_type->get('field_start_date')->getValue()[0]['value'];
+	 	$alwed= $allowance_type->get('field_end_date')->getValue()[0]['value'];
+	 	$allowance_days= $allowance_type->get('field_days')->getValue()[0]['value'];
+	 	$timeDiff = abs(strtotime($alwed) - strtotime($alwsd));
+	 	$numberDays = $timeDiff/86400;
+	 	//kint($numberDays);exit;
+	 	//print_r($allowance_days);die;
+	 	$timeDiff1 = abs(strtotime($date) - strtotime($alwed));
+	 	$numberDays2 = $timeDiff1/86400;
+	   $calculated_allowed_days = ($allowance_days/$numberDays)*$numberDays2;
+	   $entity->set('field_countdays', $calculated_allowed_days);
+	   $entity->save();
+
+}
+
+
+function altered_filters_ajax(array &$form, FormStateInterface $form_state) {
+  print_r('ajax');die;
+  return $form['field_address_administrative_area'];
+}
